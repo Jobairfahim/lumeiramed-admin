@@ -38,13 +38,19 @@ export function Dashboard({ navigate }: DashboardProps) {
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         {([
-          { icon: "📋", value: "32", label: "Total Applications" },
-          { icon: "🏥", value: "02", label: "Hospital" },
-          { icon: "💺", value: "02", label: "Empty Seats" },
-          { icon: "💰", value: "01", label: "Total Earn" },
+          { icon: "/images/totalapps.png", value: "32", label: "Total Applications" },
+          { icon: "/images/hospital.png", value: "02", label: "Hospital" },
+          { icon: "/images/empty.png", value: "02", label: "Empty Seats" },
+          { icon: "/images/earn.png", value: "01", label: "Total Earn" },
         ] as const).map((s, i) => (
           <div key={i} className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all">
-            <div className="w-11 h-11 bg-teal-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">{s.icon}</div>
+            <div className="w-11 h-11 bg-teal-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
+              {s.icon.startsWith("/") ? (
+                <img src={s.icon} alt={s.label} className="w-7 h-7 object-contain" />
+              ) : (
+                <span>{s.icon}</span>
+              )}
+            </div>
             <div>
               <p className="text-2xl font-bold text-gray-800 leading-none mb-0.5">{s.value}</p>
               <p className="text-xs text-gray-500">{s.label}</p>

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Icon } from "./Icon";
+import Image from "next/image";
 
 interface LoginProps { onLogin: () => void; }
 
@@ -24,7 +25,7 @@ export function Login({ onLogin }: LoginProps) {
       <div className="bg-white rounded-3xl shadow-2xl shadow-teal-100/60 flex overflow-hidden max-w-2xl w-full border border-gray-100">
         {/* Left image */}
         <div className="hidden md:block w-5/12 relative">
-          <img src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=600&q=80" alt="Medical team" className="w-full h-full object-cover" />
+          <Image src="/images/login.png" alt="Medical team" width={600} height={400} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-teal-900/50 via-transparent to-transparent" />
         </div>
 
