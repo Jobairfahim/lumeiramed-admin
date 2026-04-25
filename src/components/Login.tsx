@@ -33,9 +33,9 @@ export function Login({ onLogin }: LoginProps) {
         <div className="w-full md:w-7/12 p-8 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-7">
             <svg viewBox="0 0 40 40" fill="none" className="w-8 h-8">
-              <circle cx="20" cy="20" r="18" fill="#ccfbf1" />
-              <rect x="17" y="10" width="6" height="20" rx="2" fill="#14b8a6" />
-              <rect x="10" y="17" width="20" height="6" rx="2" fill="#14b8a6" />
+              <circle cx="20" cy="20" r="18" fill="#ccfbf7" />
+              <rect x="17" y="10" width="6" height="20" rx="2" fill="#2ABFBF" />
+              <rect x="10" y="17" width="20" height="6" rx="2" fill="#2ABFBF" />
               <circle cx="20" cy="20" r="3" fill="#0f766e" />
             </svg>
             <span className="text-sm font-bold text-gray-800">LumieraMed</span>

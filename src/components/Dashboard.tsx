@@ -83,7 +83,7 @@ export function Dashboard({ navigate }: DashboardProps) {
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} width={40} />
               <Tooltip contentStyle={{ borderRadius: "10px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} cursor={{ fill: "#f0fdfa" }} />
-              <Bar dataKey="value" fill="#14b8a6" radius={[4, 4, 0, 0]}
+              <Bar dataKey="value" fill="#2ABFBF" radius={[4, 4, 0, 0]}
                 label={false}
               />
             </BarChart>
@@ -101,13 +101,13 @@ export function Dashboard({ navigate }: DashboardProps) {
             <AreaChart data={AREA_DATA}>
               <defs>
                 <linearGradient id="tealGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#2ABFBF" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#2ABFBF" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ borderRadius: "10px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.1)", fontSize: 12 }} />
-              <Area type="monotone" dataKey="value" stroke="#14b8a6" strokeWidth={2.5} fill="url(#tealGrad)" dot={false} />
+              <Area type="monotone" dataKey="value" stroke="#2ABFBF" strokeWidth={2.5} fill="url(#tealGrad)" dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

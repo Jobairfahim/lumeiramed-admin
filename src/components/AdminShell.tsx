@@ -10,7 +10,8 @@ import { ApplicationDetail } from "./ApplicationDetail";
 import { MatchingPlacement } from "./MatchingPlacement";
 import { Hospital } from "./Hospital";
 import { HospitalPlacements } from "./HospitalPlacements";
-import { Messages } from "./Messages";
+import { AllPlacements } from "./AllPlacements";
+import Messages from "./Messages";
 import { Settings } from "./Settings";
 
 export function AdminShell() {
@@ -44,6 +45,7 @@ export function AdminShell() {
       );
       case "hospital": return <Hospital />;
       case "hospital-placements": return <HospitalPlacements />;
+      case "all-placements": return <AllPlacements />;
       case "messages": return <Messages />;
       case "settings": return <Settings />;
       default: return <Dashboard navigate={navigate} />;

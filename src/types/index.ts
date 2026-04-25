@@ -6,6 +6,7 @@ export type AdminPage =
   | "matching-placement"
   | "hospital"
   | "hospital-placements"
+  | "all-placements"
   | "messages"
   | "settings";
 
