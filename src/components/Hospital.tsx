@@ -1,16 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { Hospital } from "@/types";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "./Icon";
-
-const HOSPITALS: Hospital[] = Array.from({ length: 8 }, (_, i) => ({
-  id: i + 1,
-  name: "AB University",
-  email: "most@gmail.com",
-  address: "dhaka,banglaesh",
-  seats: "5/10",
-}));
+import { getHospitals, type Hospital } from "@/lib/api";
 
 interface HospitalInfoModalProps { onClose: () => void; }
 
@@ -64,8 +56,36 @@ function HospitalInfoModal({ onClose }: HospitalInfoModalProps) {
 export function Hospital() {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const filtered = useMemo(() => HOSPITALS.filter(h => h.name.toLowerCase().includes(search.toLowerCase())), [search]);
+  useEffect(() => {
+    async function fetchHospitals() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const result = await getHospitals();
+        setHospitals(result.data);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load hospitals."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchHospitals();
+  }, []);
+
+  const filtered = useMemo(() => 
+    hospitals.filter(h => h.hospitalName.toLowerCase().includes(search.toLowerCase())), 
+    [hospitals, search]
+  );
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -85,29 +105,45 @@ export function Hospital() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-teal-500">
-              {["Hospital", "Email", "Address", "Seats", "Action"].map(h => (
-                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-white uppercase tracking-wider">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(h => (
-              <tr key={h.id} className="border-t border-gray-50 hover:bg-teal-50/20">
-                <td className="px-5 py-3.5 font-semibold text-gray-800">{h.name}</td>
-                <td className="px-5 py-3.5 text-gray-600">{h.email}</td>
-                <td className="px-5 py-3.5 text-gray-600">{h.address}</td>
-                <td className="px-5 py-3.5 text-gray-600">{h.seats}</td>
-                <td className="px-5 py-3.5">
-                  <button type="button" className="text-teal-500 hover:text-teal-700 text-sm font-semibold hover:underline underline-offset-2">View</button>
-                </td>
+        {error ? (
+          <div className="px-5 py-8 text-sm text-red-600">{error}</div>
+        ) : loading ? (
+          <div className="px-5 py-8 text-sm text-gray-500">Loading hospitals...</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-teal-500">
+                {["Hospital", "Email", "Address", "Seats", "Action"].map(h => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-white uppercase tracking-wider">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map(h => (
+                <tr key={h._id} className="border-t border-gray-50 hover:bg-teal-50/20">
+                  <td className="px-5 py-3.5 font-semibold text-gray-800">{h.hospitalName}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{h.userId.email}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{h.address}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{h.availableSeats}/{h.totalSeats}</td>
+                  <td className="px-5 py-3.5">
+                    <button type="button" className="text-teal-500 hover:text-teal-700 text-sm font-semibold hover:underline underline-offset-2">View</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      {!loading && !error && filtered.length === 0 && (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon path="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" className="w-6 h-6 text-gray-400" />
+          </div>
+          <p className="text-gray-500 font-medium">No hospitals found</p>
+          <p className="text-gray-400 text-sm mt-1">Try adjusting your search</p>
+        </div>
+      )}
 
       {showModal && <HospitalInfoModal onClose={() => setShowModal(false)} />}
     </div>

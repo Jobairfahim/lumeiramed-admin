@@ -154,7 +154,7 @@ export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: Pla
               ) : (
                 <>
                   <select
-                    value={formData.department}
+                    value={formData.department || ""}
                     onChange={(e) => handleChange("department", e.target.value)}
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none transition-colors ${
                       errors.department 
@@ -186,7 +186,7 @@ export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: Pla
               ) : (
                 <>
                   <select
-                    value={formData.location}
+                    value={formData.location || ""}
                     onChange={(e) => handleChange("location", e.target.value)}
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none transition-colors ${
                       errors.location 
@@ -221,7 +221,7 @@ export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: Pla
                     type="number"
                     min="1"
                     max="50"
-                    value={formData.seats}
+                    value={formData.seats || ""}
                     onChange={(e) => handleChange("seats", e.target.value)}
                     placeholder="Number of seats"
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none transition-colors ${
@@ -249,7 +249,7 @@ export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: Pla
               ) : (
                 <>
                   <select
-                    value={formData.duration}
+                    value={formData.duration || ""}
                     onChange={(e) => handleChange("duration", e.target.value)}
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none transition-colors ${
                       errors.duration 
@@ -282,7 +282,7 @@ export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: Pla
                 <>
                   <input
                     type="date"
-                    value={formData.deadline}
+                    value={formData.deadline || ""}
                     onChange={(e) => handleChange("deadline", e.target.value)}
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none transition-colors ${
                       errors.deadline 
@@ -310,7 +310,7 @@ export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: Pla
                 <>
                   <input
                     type="date"
-                    value={formData.startDate}
+                    value={formData.startDate || ""}
                     onChange={(e) => handleChange("startDate", e.target.value)}
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none transition-colors ${
                       errors.startDate 

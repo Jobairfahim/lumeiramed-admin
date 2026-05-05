@@ -37,7 +37,8 @@ export interface Hospital {
 }
 
 export interface Placement {
-  id: number;
+  id: number | string;
+  _id?: string;
   department: string;
   location: string;
   seats: string;

@@ -1,34 +1,50 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import type { Application, StageStatus } from "@/types";
+import { useEffect, useMemo, useState } from "react";
 import { Icon } from "./Icon";
-import { StageBadge, PayBadge } from "./ui";
+import { getAllApplications, type StudentApplication } from "@/lib/api";
 
-const STAGES: StageStatus[] = ["AwaitingPayment", "MatchingRequired", "AwaitingResponse"];
+const STAGES = ["awaiting for payment", "pending", "awaiting response"];
 
-const APP_DATA: Application[] = Array.from({ length: 9 }, (_, i) => ({
-  id: i + 1,
-  studentName: "Ahmed Rahim",
-  university: "AB University",
-  department: "Cardiology Rotation",
-  duration: "4 Weeks",
-  stage: (["AwaitingPayment", "MatchingRequired", "AwaitingResponse", "AwaitingPayment", "AwaitingResponse", "MatchingRequired", "AwaitingPayment", "AwaitingPayment", "AwaitingResponse"] as StageStatus[])[i],
-  firstPayment: (["Pending", "Pending", "Pending", "Paid", "Paid", "Pending", "Paid", "Pending", "Paid"] as const)[i],
-  finalPayment: "Pending",
-}));
-
-interface AllApplicationsProps { onView: (app: Application) => void; }
+interface AllApplicationsProps { onView: (app: StudentApplication) => void; }
 
 export function AllApplications({ onView }: AllApplicationsProps) {
   const [search, setSearch] = useState("");
-  const [stageFilter, setStageFilter] = useState<StageStatus | "">("");
+  const [stageFilter, setStageFilter] = useState("");
+  const [applications, setApplications] = useState<StudentApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function fetchApplications() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const result = await getAllApplications();
+        setApplications(result.data);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load applications."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchApplications();
+  }, []);
 
   const filtered = useMemo(() =>
-    APP_DATA.filter(a =>
-      a.studentName.toLowerCase().includes(search.toLowerCase()) &&
-      (!stageFilter || a.stage === stageFilter)
-    ), [search, stageFilter]);
+    applications.filter(app =>
+      (app.firstName.toLowerCase().includes(search.toLowerCase()) ||
+       app.lastName.toLowerCase().includes(search.toLowerCase()) ||
+       app.email.toLowerCase().includes(search.toLowerCase())) &&
+      (!stageFilter || app.stage === stageFilter)
+    ), [applications, search, stageFilter]
+  );
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -44,10 +60,10 @@ export function AllApplications({ onView }: AllApplicationsProps) {
         <div className="flex-1 min-w-48">
           <p className="text-xs font-semibold text-gray-500 mb-1.5">Payment Statuses</p>
           <div className="relative">
-            <select value={stageFilter} onChange={e => setStageFilter(e.target.value as StageStatus | "")}
+            <select value={stageFilter} onChange={e => setStageFilter(e.target.value)}
               className="w-full appearance-none bg-white border border-gray-200 rounded-xl px-3.5 py-2 pr-9 text-sm text-gray-600 outline-none focus:border-teal-400">
               <option value="">Select statuses</option>
-              {STAGES.map(s => <option key={s} value={s}>{s.replace(/([A-Z])/g, ' $1').trim()}</option>)}
+              {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
             <Icon path="M19 9l-7 7-7-7" className="w-4 h-4 text-gray-400 absolute right-3 top-2.5 pointer-events-none" />
           </div>
@@ -59,30 +75,48 @@ export function AllApplications({ onView }: AllApplicationsProps) {
         <div className="px-5 py-3.5 border-b border-gray-100">
           <h1 className="font-bold text-gray-800">All Applications</h1>
         </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-teal-500">
-              {["Students", "Department", "Duration", "Stage", "First Payment", "Final Payment", "Action"].map(h => (
-                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(a => (
-              <tr key={a.id} className="border-t border-gray-50 hover:bg-teal-50/20">
-                <td className="px-5 py-3.5 font-medium text-gray-800">{a.studentName}</td>
-                <td className="px-5 py-3.5 text-gray-600">{a.department}</td>
-                <td className="px-5 py-3.5 text-gray-600">{a.duration}</td>
-                <td className="px-5 py-3.5"><StageBadge status={a.stage} /></td>
-                <td className="px-5 py-3.5"><PayBadge status={a.firstPayment} /></td>
-                <td className="px-5 py-3.5"><PayBadge status={a.finalPayment} /></td>
-                <td className="px-5 py-3.5">
-                  <button type="button" onClick={() => onView(a)} className="text-teal-500 hover:text-teal-700 text-sm font-semibold hover:underline underline-offset-2">View</button>
-                </td>
+        
+        {error ? (
+          <div className="px-5 py-8 text-sm text-red-600">{error}</div>
+        ) : loading ? (
+          <div className="px-5 py-8 text-sm text-gray-500">Loading applications...</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="bg-teal-500">
+                {["Students", "University", "Specialty", "Duration", "Stage", "First Payment", "Final Payment", "Action"].map(h => (
+                  <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map(app => (
+                <tr key={app._id} className="border-t border-gray-50 hover:bg-teal-50/20">
+                  <td className="px-5 py-3.5 font-medium text-gray-800">{app.firstName} {app.lastName}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{app.universityOrMedicalSchool}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{app.preferredSpecialty}</td>
+                  <td className="px-5 py-3.5 text-gray-600">{app.duration}</td>
+                  <td className="px-5 py-3.5"><span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">{app.stage}</span></td>
+                  <td className="px-5 py-3.5"><span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">{app.firstPayment}</span></td>
+                  <td className="px-5 py-3.5"><span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">{app.finalPayment}</span></td>
+                  <td className="px-5 py-3.5">
+                    <button type="button" onClick={() => onView(app)} className="text-teal-500 hover:text-teal-700 text-sm font-semibold hover:underline underline-offset-2">View</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        
+        {!loading && !error && filtered.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Icon path="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" className="w-6 h-6 text-gray-400" />
+            </div>
+            <p className="text-gray-500 font-medium">No applications found</p>
+            <p className="text-gray-400 text-sm mt-1">Try adjusting your search or filters</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import type { Application } from "@/types";
+import { useEffect, useState } from "react";
+import { type StudentApplication, getApplicationById, changeApplicationStatus } from "@/lib/api";
 import { Icon } from "./Icon";
 
 const DOCS = ["Curriculum Vitae", "Passport Copy", "Academic Transcript", "Recommendation Letter"] as const;
@@ -9,7 +9,7 @@ const DOCS = ["Curriculum Vitae", "Passport Copy", "Academic Transcript", "Recom
 type Decision = "accepted" | "rejected" | null;
 
 interface Props {
-  app: Application;
+  app: StudentApplication;
   onBack: () => void;
   onMatchingPlacement: () => void;
 }
@@ -26,8 +26,86 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: s
   );
 }
 
-export function ApplicationDetail({ app, onBack, onMatchingPlacement }: Props) {
+export function ApplicationDetail({ app: initialApp, onBack, onMatchingPlacement }: Props) {
   const [decision, setDecision] = useState<Decision>(null);
+  const [app, setApp] = useState<StudentApplication>(initialApp);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
+
+  useEffect(() => {
+    async function fetchApplicationDetails() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const result = await getApplicationById(initialApp._id);
+        setApp(result.data);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load application details."
+        );
+        // Fallback to initial app data if API fails
+        setApp(initialApp);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchApplicationDetails();
+  }, [initialApp._id, initialApp]);
+
+  const handleStatusChange = async (newStatus: string) => {
+    setStatusLoading(true);
+    try {
+      await changeApplicationStatus(app._id, newStatus);
+      
+      // Refresh application data
+      const result = await getApplicationById(app._id);
+      setApp(result.data);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+      alert(err instanceof Error ? err.message : "Failed to update status");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleAccept = async () => {
+    setStatusLoading(true);
+    try {
+      await changeApplicationStatus(app._id, "approved");
+      setDecision("accepted");
+      
+      // Refresh application data
+      const result = await getApplicationById(app._id);
+      setApp(result.data);
+    } catch (err) {
+      console.error("Failed to accept application:", err);
+      alert(err instanceof Error ? err.message : "Failed to accept application");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
+
+  const handleReject = async () => {
+    setStatusLoading(true);
+    try {
+      await changeApplicationStatus(app._id, "rejected");
+      setDecision("rejected");
+      
+      // Refresh application data
+      const result = await getApplicationById(app._id);
+      setApp(result.data);
+    } catch (err) {
+      console.error("Failed to reject application:", err);
+      alert(err instanceof Error ? err.message : "Failed to reject application");
+    } finally {
+      setStatusLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -38,7 +116,36 @@ export function ApplicationDetail({ app, onBack, onMatchingPlacement }: Props) {
         Go back
       </button>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-5">
+          <p className="text-red-600 font-medium">{error}</p>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="p-8">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-6 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+              <div className="grid grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                </div>
+                <div className="space-y-3">
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                  <div className="h-3 bg-gray-200 rounded"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {decision && (
           <div className={`px-8 py-2.5 text-sm font-semibold text-center ${decision === "accepted" ? "bg-teal-500 text-white" : "bg-red-500 text-white"}`}>
             {decision === "accepted" ? "✓ Application accepted" : "✗ Application rejected"}
@@ -49,18 +156,18 @@ export function ApplicationDetail({ app, onBack, onMatchingPlacement }: Props) {
             {/* Left */}
             <div>
               <div className="flex flex-col items-center mb-6 pb-5 border-b border-gray-100">
-                <img src="https://i.pravatar.cc/80?img=12" alt="Ahmed Rahmin" className="w-16 h-16 rounded-full object-cover mb-3 ring-4 ring-teal-50" />
-                <h2 className="text-lg font-bold text-gray-800">Ahmed Rahmin</h2>
-                <p className="text-sm text-gray-400 mt-0.5">Final Year</p>
+                <img src="https://i.pravatar.cc/80?img=12" alt={`${app.firstName} ${app.lastName}`} className="w-16 h-16 rounded-full object-cover mb-3 ring-4 ring-teal-50" />
+                <h2 className="text-lg font-bold text-gray-800">{app.firstName} {app.lastName}</h2>
+                <p className="text-sm text-gray-400 mt-0.5">Year {app.yearOfStudy}</p>
               </div>
               <div className="space-y-3.5">
-                <InfoRow icon="✉️" label="Email" value="ahmed.rahim@gmail.com" />
-                <InfoRow icon="🏛️" label="University / Medical School" value="Ab university" />
-                <InfoRow icon="📞" label="Phone Number" value="+88987954767" />
-                <InfoRow icon="⏱️" label="Duration" value="6 months" />
-                <InfoRow icon="📅" label="Start Date" value="12/2/2026" />
-                <InfoRow icon="🌐" label="Language" value="English" />
-                <InfoRow icon="📍" label="Preferred Cities" value="London" />
+                <InfoRow icon="✉️" label="Email" value={app.email} />
+                <InfoRow icon="🏛️" label="University / Medical School" value={app.universityOrMedicalSchool} />
+                <InfoRow icon="📞" label="Phone Number" value={app.phoneNumber} />
+                <InfoRow icon="⏱️" label="Duration" value={app.duration} />
+                <InfoRow icon="📅" label="Start Date" value={app.preferredStartDate} />
+                <InfoRow icon="🌐" label="Language" value={app.language} />
+                <InfoRow icon="📍" label="Preferred Cities" value={app.preferredCities} />
               </div>
             </div>
             {/* Right */}
@@ -68,17 +175,62 @@ export function ApplicationDetail({ app, onBack, onMatchingPlacement }: Props) {
               <div className="space-y-4 mb-6">
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Preferred Specialty</p>
-                  <p className="font-bold text-gray-800">Cardiology Rotation</p>
+                  <p className="font-bold text-gray-800">{app.preferredSpecialty}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Application Date</p>
-                  <p className="font-semibold text-gray-800">1 Mar 2026</p>
+                  <p className="font-semibold text-gray-800">{new Date(app.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Personal Statement</p>
                   <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-3.5 border border-gray-100">
-                    I am a final-year medical student who is very interested in cardiology. I have completed my internal medicine rotations and performed very well in cardiac care. I am eager to learn from experienced cardiologists and gain practical, hands-on experience in this field.
+                    {app.additionalInformation || "No additional information provided"}
                   </p>
+                </div>
+              </div>
+              
+              {/* Status Controls */}
+              <div className="space-y-4 mb-6">
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Application Status</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Admin Status</p>
+                      <select 
+                        value={app.adminStatus} 
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        disabled={statusLoading}
+                        className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:border-teal-400 bg-white text-gray-600"
+                      >
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Hospital Status</p>
+                      <select 
+                        value={app.hospitalStatus} 
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        disabled={statusLoading}
+                        className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:border-teal-400 bg-white text-gray-600"
+                      >
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Student Status</p>
+                      <select 
+                        value={app.studentStatus} 
+                        onChange={(e) => handleStatusChange(e.target.value)}
+                        disabled={statusLoading}
+                        className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:border-teal-400 bg-white text-gray-600"
+                      >
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
               <p className="text-sm font-bold text-gray-800 mb-3">Submitted Documents</p>
@@ -110,13 +262,13 @@ export function ApplicationDetail({ app, onBack, onMatchingPlacement }: Props) {
               <Icon path="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               Messages
             </button>
-            <button type="button" onClick={() => setDecision("rejected")} disabled={decision !== null}
+            <button type="button" onClick={handleReject} disabled={decision !== null || statusLoading}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all disabled:opacity-60 disabled:cursor-not-allowed ${decision === "rejected" ? "bg-red-500 text-white border-red-500" : "border-red-300 text-red-500 hover:bg-red-50"}`}>
-              <Icon path="M6 18L18 6M6 6l12 12" /> Reject
+              <Icon path="M6 18L18 6M6 6l12 12" /> {statusLoading ? 'Updating...' : 'Reject'}
             </button>
-            <button type="button" onClick={() => setDecision("accepted")} disabled={decision !== null}
+            <button type="button" onClick={handleAccept} disabled={decision !== null || statusLoading}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md transition-all disabled:opacity-60 disabled:cursor-not-allowed ${decision === "accepted" ? "bg-teal-600" : "bg-teal-500 hover:bg-teal-600"} text-white shadow-teal-200/50`}>
-              <Icon path="M5 13l4 4L19 7" /> Accept
+              <Icon path="M5 13l4 4L19 7" /> {statusLoading ? 'Updating...' : 'Accept'}
             </button>
           </div>
 
@@ -129,7 +281,8 @@ export function ApplicationDetail({ app, onBack, onMatchingPlacement }: Props) {
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

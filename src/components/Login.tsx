@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Icon } from "./Icon";
 import Image from "next/image";
+import { loginAdmin, persistTokens } from "@/lib/auth";
 
 interface LoginProps { onLogin: () => void; }
 
@@ -11,13 +12,26 @@ export function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
-    await new Promise(r => setTimeout(r, 600));
-    setLoading(false);
-    onLogin();
+
+    try {
+      const result = await loginAdmin({ email, password });
+      persistTokens(result.data.accessToken, result.data.refreshToken);
+      onLogin();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to sign in right now. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,6 +79,11 @@ export function Login({ onLogin }: LoginProps) {
             <div className="flex justify-end">
               <button type="button" className="text-sm text-teal-600 hover:underline underline-offset-2 font-medium">Forgot Password?</button>
             </div>
+            {error ? (
+              <div className="rounded-xl border border-red-100 bg-red-50 px-3.5 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            ) : null}
             <button type="submit" disabled={loading} className="w-full bg-teal-500 hover:bg-teal-600 disabled:opacity-70 text-white font-semibold py-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-teal-200">
               {loading ? (
                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
