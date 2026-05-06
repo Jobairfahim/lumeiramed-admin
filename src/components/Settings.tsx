@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { Icon } from "./Icon";
+import { changePassword, type ChangePasswordPayload } from "@/lib/auth";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
@@ -25,10 +26,27 @@ export function Settings() {
     if (form.newPass !== form.confirm) { setError("Passwords do not match."); return; }
 
     setSaveState("saving");
-    await new Promise(r => setTimeout(r, 700));
-    setForm({ current: "", newPass: "", confirm: "" });
-    setSaveState("saved");
-    setTimeout(() => setSaveState("idle"), 2500);
+    
+    try {
+      const payload: ChangePasswordPayload = {
+        currentPassword: form.current,
+        newPassword: form.newPass,
+        confirmPassword: form.confirm,
+      };
+      
+      await changePassword(payload);
+      
+      // Success
+      setForm({ current: "", newPass: "", confirm: "" });
+      setSaveState("saved");
+      setTimeout(() => setSaveState("idle"), 2500);
+    } catch (err) {
+      // Error
+      const errorMessage = err instanceof Error ? err.message : "Failed to change password. Please try again.";
+      setError(errorMessage);
+      setSaveState("error");
+      setTimeout(() => setSaveState("idle"), 2500);
+    }
   };
 
   const strength = Math.min(Math.floor(form.newPass.length / 3), 4);
@@ -136,6 +154,8 @@ export function Settings() {
               className={`w-full font-semibold py-3 rounded-xl flex items-center justify-center gap-2 shadow-md transition-all disabled:cursor-default ${
                 saveState === "saved"
                   ? "bg-green-500 text-white shadow-green-200/50"
+                  : saveState === "error"
+                  ? "bg-red-500 text-white shadow-red-200/50"
                   : "bg-teal-500 hover:bg-teal-600 text-white shadow-teal-200/50 disabled:opacity-70"
               }`}
             >
@@ -151,6 +171,11 @@ export function Settings() {
                 <>
                   <Icon path="M5 13l4 4L19 7" />
                   Password Updated!
+                </>
+              ) : saveState === "error" ? (
+                <>
+                  <Icon path="M6 18L18 6M6 6l12 12" />
+                  Update Failed
                 </>
               ) : (
                 <>

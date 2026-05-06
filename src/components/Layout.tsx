@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import type { AdminPage } from "@/types";
 import { Icon } from "./Icon";
 import { Logo, Avatar } from "./ui";
+import { logout } from "@/lib/auth";
 
 interface NavItem { key: AdminPage; label: string; iconPath: string; }
 
@@ -28,6 +29,18 @@ export function Layout({ children, currentPage, navigate }: LayoutProps) {
   const [search, setSearch] = useState("");
   const activeNav = ACTIVE_MAP[currentPage] ?? currentPage;
 
+  const handleLogout = async () => {
+    try {
+      // Generate a device token (you can customize this logic)
+      const deviceToken = "54165s4dfsdf65sd4f65sd"; // You can get this from device info or generate one
+      
+      await logout(deviceToken);
+      navigate("login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Sidebar */}
@@ -45,7 +58,7 @@ export function Layout({ children, currentPage, navigate }: LayoutProps) {
             );
           })}
         </nav>
-        <button type="button" onClick={() => navigate("login")}
+        <button type="button" onClick={handleLogout}
           className="flex items-center gap-2 px-3 py-2.5 text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-xl font-medium">
           <Icon path="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           Log Out

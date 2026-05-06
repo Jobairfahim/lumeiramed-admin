@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { type StudentApplication, getApplicationById, changeApplicationStatus } from "@/lib/api";
 import { Icon } from "./Icon";
+import { ArrowLeft, Mail, GraduationCap, Phone, Clock, Calendar, Globe, MapPin, FileText, Eye, Check } from "lucide-react";
 
 const DOCS = ["Curriculum Vitae", "Passport Copy", "Academic Transcript", "Recommendation Letter"] as const;
 
@@ -14,13 +15,13 @@ interface Props {
   onMatchingPlacement: () => void;
 }
 
-function InfoRow({ icon, label, value }: { icon: string; label: string; value: string }) {
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-start gap-2.5">
       <span className="text-base mt-0.5 flex-shrink-0">{icon}</span>
       <div>
-        <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-        <p className="text-sm text-gray-700 font-medium">{value}</p>
+        <p className="text-sm text-gray-400 mb-0.5">{label}</p>
+        <p className="text-base text-gray-700 font-medium">{value}</p>
       </div>
     </div>
   );
@@ -57,21 +58,6 @@ export function ApplicationDetail({ app: initialApp, onBack, onMatchingPlacement
     fetchApplicationDetails();
   }, [initialApp._id, initialApp]);
 
-  const handleStatusChange = async (newStatus: string) => {
-    setStatusLoading(true);
-    try {
-      await changeApplicationStatus(app._id, newStatus);
-      
-      // Refresh application data
-      const result = await getApplicationById(app._id);
-      setApp(result.data);
-    } catch (err) {
-      console.error("Failed to update status:", err);
-      alert(err instanceof Error ? err.message : "Failed to update status");
-    } finally {
-      setStatusLoading(false);
-    }
-  };
 
   const handleAccept = async () => {
     setStatusLoading(true);
@@ -108,7 +94,7 @@ export function ApplicationDetail({ app: initialApp, onBack, onMatchingPlacement
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       <button type="button" onClick={onBack} className="flex items-center gap-2 text-gray-600 hover:text-teal-600 mb-5 text-sm font-medium group">
         <span className="w-7 h-7 rounded-lg bg-gray-100 group-hover:bg-teal-50 flex items-center justify-center">
           <Icon path="M15 19l-7-7 7-7" className="w-4 h-4" />
@@ -157,83 +143,39 @@ export function ApplicationDetail({ app: initialApp, onBack, onMatchingPlacement
             <div>
               <div className="flex flex-col items-center mb-6 pb-5 border-b border-gray-100">
                 <img src="https://i.pravatar.cc/80?img=12" alt={`${app.firstName} ${app.lastName}`} className="w-16 h-16 rounded-full object-cover mb-3 ring-4 ring-teal-50" />
-                <h2 className="text-lg font-bold text-gray-800">{app.firstName} {app.lastName}</h2>
-                <p className="text-sm text-gray-400 mt-0.5">Year {app.yearOfStudy}</p>
+                <h2 className="text-xl font-bold text-gray-800">{app.firstName} {app.lastName}</h2>
+                <p className="text-base text-gray-400 mt-0.5">Year {app.yearOfStudy}</p>
               </div>
               <div className="space-y-3.5">
-                <InfoRow icon="✉️" label="Email" value={app.email} />
-                <InfoRow icon="🏛️" label="University / Medical School" value={app.universityOrMedicalSchool} />
-                <InfoRow icon="📞" label="Phone Number" value={app.phoneNumber} />
-                <InfoRow icon="⏱️" label="Duration" value={app.duration} />
-                <InfoRow icon="📅" label="Start Date" value={app.preferredStartDate} />
-                <InfoRow icon="🌐" label="Language" value={app.language} />
-                <InfoRow icon="📍" label="Preferred Cities" value={app.preferredCities} />
+                <InfoRow icon={<Mail className="w-4 h-4 text-teal-600" />} label="Email" value={app.email} />
+                <InfoRow icon={<Phone className="w-4 h-4 text-teal-600" />} label="University / Medical School" value={app.universityOrMedicalSchool} />
+                <InfoRow icon={<Phone className="w-4 h-4 text-teal-600" />} label="Phone Number" value={app.phoneNumber} />
+                <InfoRow icon={<GraduationCap className="w-4 h-4 text-teal-600" />} label="Duration" value={app.duration} />
+                <InfoRow icon={<Calendar className="w-4 h-4 text-teal-600" />} label="Start Date" value={app.preferredStartDate} />
+                <InfoRow icon={<Globe className="w-4 h-4 text-teal-600" />} label="Language" value={app.language} />
+                <InfoRow icon={<MapPin className="w-4 h-4 text-teal-600" />} label="Preferred Cities" value={app.preferredCities} />
               </div>
             </div>
             {/* Right */}
             <div>
               <div className="space-y-4 mb-6">
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Preferred Specialty</p>
-                  <p className="font-bold text-gray-800">{app.preferredSpecialty}</p>
+                  <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Preferred Specialty</p>
+                  <p className="text-base font-bold text-gray-800">{app.preferredSpecialty}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Application Date</p>
-                  <p className="font-semibold text-gray-800">{new Date(app.createdAt).toLocaleDateString()}</p>
+                  <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-1">Application Date</p>
+                  <p className="text-base font-semibold text-gray-800">{new Date(app.createdAt).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Personal Statement</p>
-                  <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-3.5 border border-gray-100">
+                  <p className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Personal Statement</p>
+                  <p className="text-base text-gray-600 leading-relaxed bg-gray-50 rounded-xl p-3.5 border border-gray-100">
                     {app.additionalInformation || "No additional information provided"}
                   </p>
                 </div>
               </div>
               
-              {/* Status Controls */}
-              <div className="space-y-4 mb-6">
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Application Status</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Admin Status</p>
-                      <select 
-                        value={app.adminStatus} 
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        disabled={statusLoading}
-                        className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:border-teal-400 bg-white text-gray-600"
-                      >
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                      </select>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Hospital Status</p>
-                      <select 
-                        value={app.hospitalStatus} 
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        disabled={statusLoading}
-                        className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:border-teal-400 bg-white text-gray-600"
-                      >
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                      </select>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1">Student Status</p>
-                      <select 
-                        value={app.studentStatus} 
-                        onChange={(e) => handleStatusChange(e.target.value)}
-                        disabled={statusLoading}
-                        className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 outline-none focus:border-teal-400 bg-white text-gray-600"
-                      >
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm font-bold text-gray-800 mb-3">Submitted Documents</p>
+                            <p className="text-base font-bold text-gray-800 mb-3">Submitted Documents</p>
               <div className="grid grid-cols-2 gap-2.5">
                 {DOCS.map(doc => (
                   <div key={doc} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 hover:border-teal-300 hover:bg-teal-50/30 group/doc">
@@ -242,8 +184,8 @@ export function ApplicationDetail({ app: initialApp, onBack, onMatchingPlacement
                         <Icon path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" className="w-3.5 h-3.5 text-teal-600" />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold text-gray-700 truncate">{doc}</p>
-                        <p className="text-xs text-gray-400">245 kB</p>
+                        <p className="text-sm font-semibold text-gray-700 truncate">{doc}</p>
+                        <p className="text-sm text-gray-400">245 kB</p>
                       </div>
                     </div>
                     <button type="button" className="text-gray-400 group-hover/doc:text-teal-500 flex-shrink-0 ml-1" aria-label={`Download ${doc}`}>
@@ -275,9 +217,9 @@ export function ApplicationDetail({ app: initialApp, onBack, onMatchingPlacement
           {/* Matching Placement button */}
           <div className="flex justify-end mt-3">
             <button type="button" onClick={onMatchingPlacement}
-              className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-md shadow-teal-200/50">
+              className="flex items-center gap-3 bg-teal-500 hover:bg-teal-600 text-white text-base font-semibold px-6 py-3 rounded-xl shadow-md shadow-teal-200/50">
               <Icon path="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              Matching Placement
+              Find Your Matching Placement
             </button>
           </div>
         </div>

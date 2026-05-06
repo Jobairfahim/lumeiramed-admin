@@ -5,6 +5,7 @@ import type { Placement } from "@/types";
 import { Icon } from "./Icon";
 import { PlacementModal } from "./PlacementModal";
 import { getPlacements, createPlacement, updatePlacement, deletePlacement } from "@/lib/api";
+import toast from "react-hot-toast";
 
 
 export function AllPlacements() {
@@ -93,19 +94,52 @@ export function AllPlacements() {
   };
 
   const handleDelete = async (placement: Placement) => {
-    if (window.confirm(`Are you sure you want to delete the placement for "${placement.department}" at ${placement.location}?`)) {
-      try {
-        const result = await deletePlacement(placement.id);
-        
-        // Refresh placements list
-        await fetchPlacements();
-        console.log("Placement deleted:", result.data);
-      } catch (err) {
-        console.error("Error deleting placement:", err);
-        // TODO: Show error notification
-        alert(err instanceof Error ? err.message : "Failed to delete placement");
-      }
-    }
+    toast((t) => (
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <p className="font-medium text-gray-900">Delete Placement?</p>
+          <p className="text-sm text-gray-500 mt-1">
+            Are you sure you want to delete the placement for &quot;{placement.department}&quot; at {placement.location}?
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await deletePlacement(placement.id);
+                
+                // Refresh placements list
+                await fetchPlacements();
+                toast.success("Placement deleted successfully!");
+              } catch (err) {
+                console.error("Error deleting placement:", err);
+                toast.error(err instanceof Error ? err.message : "Failed to delete placement");
+              }
+            }}
+            className="px-3 py-1.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 0, // Don't auto-dismiss
+      position: 'top-center',
+      style: {
+        background: 'white',
+        border: '1px solid #e5e7eb',
+        borderRadius: '0.75rem',
+        padding: '1rem',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      },
+    });
   };
 
   // Helper function to refresh placements

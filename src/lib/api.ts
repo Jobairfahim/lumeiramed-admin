@@ -1,5 +1,26 @@
-import { API_BASE_URL, getAuthHeaders } from "./auth";
+import { API_BASE_URL, getAuthHeaders, getCurrentUserId } from "./auth";
 import type { Placement } from "@/types";
+import type { ConversationSummary } from "./types";
+
+// API response interface (raw from server)
+export interface ApiPlacement {
+  _id?: string;
+  id?: string | number;
+  department: string;
+  location: string;
+  totalSeats?: number;
+  seats?: string | number;
+  durationWeeks?: string;
+  duration?: string;
+  deadline: string;
+  startDate: string;
+  description?: string;
+  requirements?: string;
+  isDeleted?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
 
 export interface PlacementsResponse {
   success: boolean;
@@ -74,13 +95,35 @@ export async function getPlacements(): Promise<PlacementsResponse> {
     },
   });
 
-  const result = (await response.json()) as PlacementsResponse;
+  const result = await response.json() as {
+    success: boolean;
+    message: string;
+    statusCode: number;
+    data: ApiPlacement[];
+  };
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || "Failed to load placements.");
   }
 
-  return result;
+  // Transform API data to match frontend interface
+  const transformedData: Placement[] = result.data.map(placement => ({
+    id: placement.id || placement._id || "",
+    _id: placement._id,
+    department: placement.department,
+    location: placement.location,
+    seats: placement.totalSeats?.toString() || placement.seats?.toString() || "0",
+    duration: placement.durationWeeks ? `${placement.durationWeeks} Weeks` : placement.duration || "",
+    deadline: placement.deadline,
+    startDate: placement.startDate,
+  }));
+
+  return {
+    success: result.success,
+    message: result.message,
+    statusCode: result.statusCode,
+    data: transformedData,
+  };
 }
 
 // Create placement
@@ -94,13 +137,35 @@ export async function createPlacement(payload: CreatePlacementPayload): Promise<
     body: JSON.stringify(payload),
   });
 
-  const result = (await response.json()) as PlacementResponse;
+  const result = await response.json() as {
+    success: boolean;
+    message: string;
+    statusCode: number;
+    data: ApiPlacement;
+  };
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || "Failed to create placement");
   }
 
-  return result;
+  // Transform API data to match frontend interface
+  const transformedData: Placement = {
+    id: result.data.id || result.data._id || "",
+    _id: result.data._id,
+    department: result.data.department,
+    location: result.data.location,
+    seats: result.data.totalSeats?.toString() || result.data.seats?.toString() || "0",
+    duration: result.data.durationWeeks ? `${result.data.durationWeeks} Weeks` : result.data.duration || "",
+    deadline: result.data.deadline,
+    startDate: result.data.startDate,
+  };
+
+  return {
+    success: result.success,
+    message: result.message,
+    statusCode: result.statusCode,
+    data: transformedData,
+  };
 }
 
 // Update placement
@@ -114,13 +179,35 @@ export async function updatePlacement(id: string | number, payload: UpdatePlacem
     body: JSON.stringify(payload),
   });
 
-  const result = (await response.json()) as PlacementResponse;
+  const result = await response.json() as {
+    success: boolean;
+    message: string;
+    statusCode: number;
+    data: ApiPlacement;
+  };
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || "Failed to update placement");
   }
 
-  return result;
+  // Transform API data to match frontend interface
+  const transformedData: Placement = {
+    id: result.data.id || result.data._id || "",
+    _id: result.data._id,
+    department: result.data.department,
+    location: result.data.location,
+    seats: result.data.totalSeats?.toString() || result.data.seats?.toString() || "0",
+    duration: result.data.durationWeeks ? `${result.data.durationWeeks} Weeks` : result.data.duration || "",
+    deadline: result.data.deadline,
+    startDate: result.data.startDate,
+  };
+
+  return {
+    success: result.success,
+    message: result.message,
+    statusCode: result.statusCode,
+    data: transformedData,
+  };
 }
 
 // Delete placement
@@ -132,10 +219,69 @@ export async function deletePlacement(id: string | number): Promise<PlacementRes
     },
   });
 
-  const result = (await response.json()) as PlacementResponse;
+  const result = await response.json() as {
+    success: boolean;
+    message: string;
+    statusCode: number;
+    data: ApiPlacement;
+  };
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || "Failed to delete placement");
+  }
+
+  // Transform API data to match frontend interface
+  const transformedData: Placement = {
+    id: result.data.id || result.data._id || "",
+    _id: result.data._id,
+    department: result.data.department,
+    location: result.data.location,
+    seats: result.data.totalSeats?.toString() || result.data.seats?.toString() || "0",
+    duration: result.data.durationWeeks ? `${result.data.durationWeeks} Weeks` : result.data.duration || "",
+    deadline: result.data.deadline,
+    startDate: result.data.startDate,
+  };
+
+  return {
+    success: result.success,
+    message: result.message,
+    statusCode: result.statusCode,
+    data: transformedData,
+  };
+}
+
+export interface CreateHospitalPayload {
+  email: string;
+  password: string;
+  description: string;
+  hospitalName: string;
+  address: string;
+  phone: string;
+  website: string;
+}
+
+export interface CreateHospitalResponse {
+  success: boolean;
+  message: string;
+  statusCode: number;
+  data: Hospital;
+}
+
+// Create hospital
+export async function createHospital(payload: CreateHospitalPayload): Promise<CreateHospitalResponse> {
+  const response = await fetch(`${API_BASE_URL}/users/hospital`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const result = (await response.json()) as CreateHospitalResponse;
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to create hospital");
   }
 
   return result;
@@ -246,7 +392,9 @@ export async function getAdminOverview(): Promise<AdminOverviewResponse> {
 // All applications interfaces
 export interface StudentProfile {
   _id: string;
+  id?: string;
   fullName: string;
+  userId?: string | { _id?: string; id?: string; email?: string };
 }
 
 export interface StudentUser {
@@ -440,6 +588,47 @@ export async function getConversationMessages(conversationId: string): Promise<M
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || "Failed to load messages.");
+  }
+
+  return result;
+}
+
+// Get student profile
+export async function getStudentProfile(): Promise<{ success: boolean; message: string; data: StudentProfile }> {
+  const userId = getCurrentUserId();
+  
+  if (!userId) {
+    return {
+      success: false,
+      message: "User not authenticated",
+      data: { _id: "", fullName: "" }
+    };
+  }
+
+  return {
+    success: true,
+    message: "Profile retrieved successfully",
+    data: {
+      _id: userId,
+      id: userId,
+      fullName: "User",
+      userId: userId
+    }
+  };
+}
+
+// Get user conversations
+export async function getUserConversations(): Promise<{ success: boolean; message: string; error?: string; data: ConversationSummary[] }> {
+  const response = await fetch(`${API_BASE_URL}/conversations/user`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  const result = (await response.json()) as { success: boolean; message: string; data: ConversationSummary[] };
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to load conversations.");
   }
 
   return result;

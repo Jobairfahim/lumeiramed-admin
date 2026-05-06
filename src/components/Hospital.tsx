@@ -2,52 +2,167 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Icon } from "./Icon";
-import { getHospitals, type Hospital } from "@/lib/api";
+import { getHospitals, createHospital, type Hospital, type CreateHospitalPayload } from "@/lib/api";
+import toast from "react-hot-toast";
 
-interface HospitalInfoModalProps { onClose: () => void; }
+interface HospitalInfoModalProps { 
+  onClose: () => void;
+  onSuccess?: () => void;
+}
 
-function HospitalInfoModal({ onClose }: HospitalInfoModalProps) {
+function HospitalInfoModal({ onClose, onSuccess }: HospitalInfoModalProps) {
+  const [formData, setFormData] = useState<CreateHospitalPayload>({
+    email: "",
+    password: "",
+    description: "",
+    hospitalName: "",
+    address: "",
+    phone: "",
+    website: ""
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleChange = (field: keyof CreateHospitalPayload, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.hospitalName) newErrors.hospitalName = "Hospital name is required";
+    if (!formData.email) newErrors.email = "Email is required";
+    if (!formData.password) newErrors.password = "Password is required";
+    if (!formData.address) newErrors.address = "Address is required";
+    if (!formData.phone) newErrors.phone = "Phone is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    
+    try {
+      await createHospital(formData);
+      toast.success("Hospital created successfully!");
+      setFormData({
+        email: "",
+        password: "",
+        description: "",
+        hospitalName: "",
+        address: "",
+        phone: "",
+        website: ""
+      });
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      console.error("Error creating hospital:", err);
+      toast.error(err instanceof Error ? err.message : "Failed to create hospital");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800">Hospital Information</h2>
+          <h2 className="text-lg font-bold text-gray-800">Create Hospital</h2>
           <button type="button" onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
             <Icon path="M6 18L18 6M6 6l12 12" className="w-4 h-4" />
           </button>
         </div>
-        <div className="px-6 py-5 space-y-3.5">
+        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-3.5">
           <div className="grid grid-cols-2 gap-3.5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Hospital Name <span className="text-red-400">*</span></label>
-              <input type="text" placeholder="e.g. City General Hospital Kalyar" className="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+              <input 
+                type="text" 
+                value={formData.hospitalName}
+                onChange={(e) => handleChange("hospitalName", e.target.value)}
+                placeholder="e.g. City General Hospital" 
+                className={`w-full border rounded-xl px-3.5 py-2 text-sm bg-gray-50 outline-none transition-colors ${
+                  errors.hospitalName 
+                    ? "border-red-300 bg-red-50 text-red-900" 
+                    : "border-gray-200 text-gray-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                }`}
+              />
+              {errors.hospitalName && (
+                <p className="mt-1 text-xs text-red-600">{errors.hospitalName}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Address <span className="text-red-400">*</span></label>
-              <input type="text" placeholder="123 Medical Center Drive City, Country" className="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+              <input 
+                type="text" 
+                value={formData.address}
+                onChange={(e) => handleChange("address", e.target.value)}
+                placeholder="123 Medical Center Drive, City" 
+                className={`w-full border rounded-xl px-3.5 py-2 text-sm bg-gray-50 outline-none transition-colors ${
+                  errors.address 
+                    ? "border-red-300 bg-red-50 text-red-900" 
+                    : "border-gray-200 text-gray-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                }`}
+              />
+              {errors.address && (
+                <p className="mt-1 text-xs text-red-600">{errors.address}</p>
+              )}
             </div>
           </div>
           {[
-            { id: "email", label: "Email *", placeholder: "youremail@example.com", type: "email" },
-            { id: "phone", label: "Phone *", placeholder: "+1(555)xxx", type: "tel" },
-            { id: "website", label: "Website", placeholder: "e.g. 4", type: "text" },
-            { id: "password", label: "Password", placeholder: "••••••", type: "password" },
+            { id: "email", label: "Email *", placeholder: "youremail@example.com", type: "email", field: "email" as keyof CreateHospitalPayload },
+            { id: "phone", label: "Phone *", placeholder: "+1(555)xxx", type: "tel", field: "phone" as keyof CreateHospitalPayload },
+            { id: "website", label: "Website", placeholder: "www.example.com", type: "text", field: "website" as keyof CreateHospitalPayload },
+            { id: "password", label: "Password *", placeholder: "•••••", type: "password", field: "password" as keyof CreateHospitalPayload },
           ].map(f => (
             <div key={f.id}>
               <label htmlFor={f.id} className="block text-sm font-medium text-gray-700 mb-1">{f.label}</label>
-              <input id={f.id} type={f.type} placeholder={f.placeholder} className="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100" />
+              <input 
+                id={f.id} 
+                type={f.type} 
+                value={formData[f.field]}
+                onChange={(e) => handleChange(f.field, e.target.value)}
+                placeholder={f.placeholder} 
+                className={`w-full border rounded-xl px-3.5 py-2 text-sm bg-gray-50 outline-none transition-colors ${
+                  errors[f.field] 
+                    ? "border-red-300 bg-red-50 text-red-900 placeholder-red-400" 
+                    : "border-gray-200 text-gray-700 placeholder-gray-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                }`}
+              />
+              {errors[f.field] && (
+                <p className="mt-1 text-xs text-red-600">{errors[f.field]}</p>
+              )}
             </div>
           ))}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Requirement &amp; Description</label>
-            <textarea rows={3} placeholder="Enter placement requirements and description" className="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 resize-none" />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea 
+              rows={3} 
+              value={formData.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+              placeholder="Enter hospital description" 
+              className="w-full border border-gray-200 rounded-xl px-3.5 py-2 text-sm bg-gray-50 outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 resize-none" 
+            />
           </div>
-        </div>
         <div className="px-6 pb-5">
-          <button type="button" onClick={onClose} className="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2.5 rounded-xl shadow-md shadow-teal-200/50">
-            Save
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full bg-teal-500 hover:bg-teal-600 text-white font-semibold py-2.5 rounded-xl shadow-md shadow-teal-200/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {isSubmitting ? "Creating..." : "Create Hospital"}
           </button>
         </div>
+      </form>
       </div>
     </div>
   );
@@ -60,25 +175,25 @@ export function Hospital() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function fetchHospitals() {
-      setLoading(true);
-      setError("");
+  const fetchHospitals = async () => {
+    setLoading(true);
+    setError("");
 
-      try {
-        const result = await getHospitals();
-        setHospitals(result.data);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load hospitals."
-        );
-      } finally {
-        setLoading(false);
-      }
+    try {
+      const result = await getHospitals();
+      setHospitals(result.data);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to load hospitals."
+      );
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     fetchHospitals();
   }, []);
 
@@ -145,7 +260,7 @@ export function Hospital() {
         </div>
       )}
 
-      {showModal && <HospitalInfoModal onClose={() => setShowModal(false)} />}
+      {showModal && <HospitalInfoModal onClose={() => setShowModal(false)} onSuccess={fetchHospitals} />}
     </div>
   );
 }

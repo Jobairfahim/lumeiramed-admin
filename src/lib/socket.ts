@@ -1,11 +1,11 @@
-import { io, Socket } from "socket.io-client";
+import { io, type Socket } from "socket.io-client";
 
 type Listener<T> = (payload: T) => void;
 
 export interface ChatMessage {
   id?: string;
   _id?: string;
-  senderId?: string;
+  senderId?: string | { _id?: string; id?: string; email?: string };
   conversationId: string;
   content: string;
   attachments?: unknown[];
@@ -30,12 +30,12 @@ export interface RealtimeNotification {
 
 function normalizeSocketUrl(rawUrl?: string) {
   const fallback = "https://server.lumieramed.com";
+  console.log("🔍 Debug: normalizeSocketUrl called");
   const trimmed = (rawUrl ?? fallback).trim().replace(/\/+$/, "");
-
+  console.log("🔍 Debug: Raw socket URL:", rawUrl);
   if (trimmed.endsWith("/api/v1")) {
     return trimmed.replace(/\/api\/v1$/, "");
   }
-
   return trimmed;
 }
 
@@ -50,17 +50,30 @@ class SocketManager {
   private currentConversationId: string | null = null;
 
   connect(token: string) {
-    if (!token) return null;
+    if (!token) {
+      console.error("❌ Socket: No token provided");
+      return null;
+    }
 
     if (this.socket?.connected) {
+      console.log("✅ Socket: Already connected");
       return this.socket;
     }
 
+    // Disconnect stale socket if exists
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+
+    console.log("🔌 Socket: Connecting to", SOCKET_URL);
     this.socket = io(SOCKET_URL, {
       query: { token },
       transports: ["websocket", "polling"],
       autoConnect: true,
       reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
     return this.socket;
@@ -68,6 +81,10 @@ class SocketManager {
 
   getSocket() {
     return this.socket;
+  }
+
+  isConnected() {
+    return this.socket?.connected ?? false;
   }
 
   onConnect(listener: Listener<void>) {
@@ -108,7 +125,10 @@ class SocketManager {
   joinConversation(conversationId: string) {
     if (!this.socket || !conversationId) return;
 
-    if (this.currentConversationId && this.currentConversationId !== conversationId) {
+    if (
+      this.currentConversationId &&
+      this.currentConversationId !== conversationId
+    ) {
       this.socket.emit("leaveConversation", this.currentConversationId);
     }
 
@@ -121,41 +141,44 @@ class SocketManager {
     if (!this.socket || !id) return;
 
     this.socket.emit("leaveConversation", id);
-
     if (this.currentConversationId === id) {
       this.currentConversationId = null;
     }
   }
 
-  sendMessage(conversationId: string, content: string, attachments: unknown[] = []) {
-    if (!this.socket || !conversationId || !content.trim()) return;
+  sendMessage(
+    conversationId: string,
+    content: string,
+    attachments: unknown[] = [],
+  ) {
+    if (!this.socket || !conversationId || !content.trim()) {
+      console.error("❌ Socket: Cannot send message");
+      return false;
+    }
 
     this.socket.emit("sendMessage", {
       conversationId,
       content: content.trim(),
       attachments,
     });
+    return true;
   }
 
   markAsRead(conversationId: string) {
     if (!this.socket || !conversationId) return;
-
     this.socket.emit("markAsRead", { conversationId });
   }
 
   disconnect() {
     if (!this.socket) return;
-
     if (this.currentConversationId) {
       this.socket.emit("leaveConversation", this.currentConversationId);
       this.currentConversationId = null;
     }
-
     this.socket.disconnect();
     this.socket = null;
   }
 }
 
 const socketManager = new SocketManager();
-
 export { SOCKET_URL, socketManager };

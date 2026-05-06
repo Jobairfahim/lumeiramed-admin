@@ -12,30 +12,6 @@ interface PlacementModalProps {
   mode: "create" | "edit" | "view";
 }
 
-const DEPARTMENTS = [
-  "Cardiology Rotation",
-  "Neurology Ward", 
-  "Pediatrics Unit",
-  "Emergency Department",
-  "Surgery Theater",
-  "Radiology Lab",
-  "Oncology Ward",
-  "Maternity Ward",
-  "Internal Medicine",
-  "Orthopedics"
-];
-
-const LOCATIONS = [
-  "London General Hospital",
-  "Manchester Medical Center",
-  "Birmingham Hospital",
-  "Liverpool Health Center",
-  "Leeds General Infirmary",
-  "Sheffield Teaching Hospital",
-  "Bristol Royal Infirmary",
-  "Newcastle Hospital"
-];
-
 const DURATIONS = ["4 Weeks", "6 Weeks", "8 Weeks", "10 Weeks", "12 Weeks"];
 
 export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: PlacementModalProps) {
@@ -153,20 +129,17 @@ export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: Pla
                 </div>
               ) : (
                 <>
-                  <select
+                  <input
+                    type="text"
                     value={formData.department || ""}
                     onChange={(e) => handleChange("department", e.target.value)}
+                    placeholder="Enter department name"
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none transition-colors ${
                       errors.department 
-                        ? "border-red-300 bg-red-50 text-red-900" 
-                        : "border-gray-200 bg-white text-gray-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                        ? "border-red-300 bg-red-50 text-red-900 placeholder-red-400" 
+                        : "border-gray-200 bg-white text-gray-700 placeholder-gray-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                     }`}
-                  >
-                    <option value="">Select department</option>
-                    {DEPARTMENTS.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
+                  />
                   {errors.department && (
                     <p className="mt-1 text-xs text-red-600">{errors.department}</p>
                   )}
@@ -185,20 +158,17 @@ export function PlacementModal({ isOpen, onClose, placement, onSave, mode }: Pla
                 </div>
               ) : (
                 <>
-                  <select
+                  <input
+                    type="text"
                     value={formData.location || ""}
                     onChange={(e) => handleChange("location", e.target.value)}
+                    placeholder="Enter location"
                     className={`w-full px-4 py-2.5 border rounded-xl text-sm outline-none transition-colors ${
                       errors.location 
-                        ? "border-red-300 bg-red-50 text-red-900" 
-                        : "border-gray-200 bg-white text-gray-700 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
+                        ? "border-red-300 bg-red-50 text-red-900 placeholder-red-400" 
+                        : "border-gray-200 bg-white text-gray-700 placeholder-gray-400 focus:border-teal-400 focus:ring-2 focus:ring-teal-100"
                     }`}
-                  >
-                    <option value="">Select location</option>
-                    {LOCATIONS.map(loc => (
-                      <option key={loc} value={loc}>{loc}</option>
-                    ))}
-                  </select>
+                  />
                   {errors.location && (
                     <p className="mt-1 text-xs text-red-600">{errors.location}</p>
                   )}

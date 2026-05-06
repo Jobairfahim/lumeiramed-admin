@@ -47,7 +47,7 @@ export function AllApplications({ onView }: AllApplicationsProps) {
   );
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       {/* Filters */}
       <div className="flex gap-4 mb-5 flex-wrap">
         <div className="flex-1 min-w-48">

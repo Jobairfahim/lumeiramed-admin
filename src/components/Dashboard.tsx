@@ -41,7 +41,7 @@ export function Dashboard({ navigate }: DashboardProps) {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto space-y-5">
+      <div className="max-w-7xl mx-auto space-y-5">
         <div className="grid grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="bg-white rounded-2xl p-4 animate-pulse">
@@ -75,7 +75,7 @@ export function Dashboard({ navigate }: DashboardProps) {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center">
           <p className="text-red-600 font-medium">{error}</p>
         </div>
@@ -88,7 +88,7 @@ export function Dashboard({ navigate }: DashboardProps) {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-5">
+    <div className="max-w-7xl mx-auto space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         {([
