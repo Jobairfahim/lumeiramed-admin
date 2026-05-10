@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import type { AdminPage } from "@/types";
 import { Icon } from "./Icon";
-import { Logo, Avatar } from "./ui";
+import { Logo } from "./ui";
 import { logout } from "@/lib/auth";
+import { getUnreadNotifications, readAllNotifications, type Notification } from "@/lib/api";
 
 interface NavItem { key: AdminPage; label: string; iconPath: string; }
 
@@ -20,7 +21,6 @@ const NAV_ITEMS: NavItem[] = [
 const ACTIVE_MAP: Partial<Record<AdminPage, AdminPage>> = {
   "application-detail": "applications",
   "matching-placement": "applications",
-  "hospital-placements": "hospital",
 };
 
 interface LayoutProps { children: ReactNode; currentPage: AdminPage; navigate: (p: AdminPage) => void; }
@@ -28,6 +28,37 @@ interface LayoutProps { children: ReactNode; currentPage: AdminPage; navigate: (
 export function Layout({ children, currentPage, navigate }: LayoutProps) {
   const [search, setSearch] = useState("");
   const activeNav = ACTIVE_MAP[currentPage] ?? currentPage;
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const result = await getUnreadNotifications();
+        if (result.success) {
+          const data = result.data as { notifications?: Notification[] } | Notification[];
+          const notifs = Array.isArray(data) ? data : (data?.notifications || []);
+          setNotifications(notifs);
+        }
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+    fetchNotifications();
+  }, []);
+
+  const handleBellClick = async () => {
+    setShowNotifications(!showNotifications);
+    if (!showNotifications && notifications.length > 0) {
+      try {
+        await readAllNotifications();
+        setNotifications([]);
+      } catch (error) {
+        console.error("Failed to read notifications:", error);
+      }
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -73,15 +104,47 @@ export function Layout({ children, currentPage, navigate }: LayoutProps) {
             <input type="search" placeholder="Search students..." className="bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400 w-full" value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="ml-auto flex items-center gap-4">
-            <button type="button" className="relative p-2 rounded-xl hover:bg-gray-50">
-              <Icon path="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" className="w-5 h-5 text-gray-500" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
-            </button>
-            <div className="flex items-center gap-2.5">
+            <div className="relative">
+              <button type="button" onClick={handleBellClick} className="relative p-2 rounded-xl hover:bg-gray-50">
+                <Icon path="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" className="w-5 h-5 text-gray-500" />
+                {notifications.length > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-lg z-50 p-4">
+                  <h3 className="text-sm font-semibold text-gray-800 mb-3">Notifications</h3>
+                  {(!Array.isArray(notifications) || notifications.length === 0) ? (
+                    <p className="text-xs text-gray-500">No new notifications.</p>
+                  ) : (
+                    <ul className="space-y-3 max-h-64 overflow-y-auto">
+                      {notifications.map(n => (
+                        <li key={n._id} className="text-xs text-gray-600 border-b border-gray-50 pb-2">
+                          {n.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="relative flex items-center gap-2.5 cursor-pointer" onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}>
               <div className="text-right">
                 <p className="text-sm font-semibold text-gray-800 leading-tight">Admin</p>
               </div>
-              <Avatar size="w-9 h-9" src="https://i.pravatar.cc/40?img=60" alt="Admin" />
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center flex-shrink-0 ring-2 ring-teal-100">
+                <span className="text-white text-sm font-bold select-none">AD</span>
+              </div>
+              {profileDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg z-50 py-1 overflow-hidden">
+                  <button onClick={() => navigate("settings")} className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-teal-50 hover:text-teal-700 transition-colors w-full text-left">
+                    <Icon path="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" className="w-4 h-4" />
+                    Settings
+                  </button>
+                  <button onClick={handleLogout} className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-red-50 hover:text-red-500 transition-colors w-full text-left">
+                    <Icon path="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" className="w-4 h-4" />
+                    Log Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>

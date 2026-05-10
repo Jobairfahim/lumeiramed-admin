@@ -168,7 +168,7 @@ function HospitalInfoModal({ onClose, onSuccess }: HospitalInfoModalProps) {
   );
 }
 
-export function Hospital() {
+export function Hospital({ onView }: { onView?: (id: string) => void }) {
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
@@ -241,7 +241,7 @@ export function Hospital() {
                   <td className="px-5 py-3.5 text-gray-600">{h.address}</td>
                   <td className="px-5 py-3.5 text-gray-600">{h.availableSeats}/{h.totalSeats}</td>
                   <td className="px-5 py-3.5">
-                    <button type="button" className="text-teal-500 hover:text-teal-700 text-sm font-semibold hover:underline underline-offset-2">View</button>
+                    <button type="button" onClick={() => onView?.(h.userId._id)} className="text-teal-500 hover:text-teal-700 text-sm font-semibold hover:underline underline-offset-2">View</button>
                   </td>
                 </tr>
               ))}

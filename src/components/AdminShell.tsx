@@ -19,6 +19,7 @@ import { getAccessToken } from "@/lib/auth";
 export function AdminShell() {
   const [page, setPage] = useState<AdminPage>("login");
   const [selectedApp, setSelectedApp] = useState<StudentApplication | null>(null);
+  const [selectedHospitalId, setSelectedHospitalId] = useState<string | null>(null);
 
   useEffect(() => {
     if (getAccessToken()) {
@@ -30,6 +31,9 @@ export function AdminShell() {
     setPage(p);
     if (p !== "application-detail" && p !== "matching-placement") {
       setSelectedApp(null);
+    }
+    if (p !== "hospital-placements" && p !== "hospital") {
+      setSelectedHospitalId(null);
     }
   };
 
@@ -51,8 +55,8 @@ export function AdminShell() {
       case "matching-placement": return (
         <MatchingPlacement onBack={() => navigate("application-detail")} application={selectedApp || undefined} />
       );
-      case "hospital": return <Hospital />;
-      case "hospital-placements": return <HospitalPlacements />;
+      case "hospital": return <Hospital onView={(id) => { setSelectedHospitalId(id); navigate("hospital-placements"); }} />;
+      case "hospital-placements": return <HospitalPlacements hospitalId={selectedHospitalId} onBack={() => navigate("hospital")} />;
       case "all-placements": return <AllPlacements />;
       case "messages": return <Messages />;
       case "settings": return <Settings />;

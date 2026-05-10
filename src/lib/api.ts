@@ -126,6 +126,45 @@ export async function getPlacements(): Promise<PlacementsResponse> {
   };
 }
 
+// Get placements by hospital ID
+export async function getPlacementsByHospital(hospitalId: string): Promise<PlacementsResponse> {
+  const response = await fetch(`${API_BASE_URL}/placements/${hospitalId}/hospital`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  const result = await response.json() as {
+    success: boolean;
+    message: string;
+    statusCode: number;
+    data: ApiPlacement[];
+  };
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to load hospital placements.");
+  }
+
+  // Transform API data to match frontend interface
+  const transformedData: Placement[] = result.data.map(placement => ({
+    id: placement.id || placement._id || "",
+    _id: placement._id,
+    department: placement.department,
+    location: placement.location,
+    seats: placement.totalSeats?.toString() || placement.seats?.toString() || "0",
+    duration: placement.durationWeeks ? `${placement.durationWeeks} Weeks` : placement.duration || "",
+    deadline: placement.deadline,
+    startDate: placement.startDate,
+  }));
+
+  return {
+    success: result.success,
+    message: result.message,
+    statusCode: result.statusCode,
+    data: transformedData,
+  };
+}
+
 // Create placement
 export async function createPlacement(payload: CreatePlacementPayload): Promise<PlacementResponse> {
   const response = await fetch(`${API_BASE_URL}/placements`, {
@@ -434,6 +473,8 @@ export interface StudentApplication {
   __v: number;
   studentProfile: StudentProfile;
   studentUser: StudentUser;
+  placements?: Record<string, unknown>[];
+  matchingPlacements?: Record<string, unknown>[];
 }
 
 export interface AllApplicationsResponse {
@@ -462,7 +503,7 @@ export async function getAllApplications(): Promise<AllApplicationsResponse> {
 
 // Get single student placement enquiry by ID
 export async function getApplicationById(id: string): Promise<{ success: boolean; message: string; statusCode: number; data: StudentApplication }> {
-  const response = await fetch(`${API_BASE_URL}/student-placement-enquiries/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/student-placement-enquiries/admin/${id}`, {
     headers: {
       ...getAuthHeaders(),
     },
@@ -498,14 +539,19 @@ export async function changeApplicationStatus(id: string, status: string): Promi
 }
 
 // Change student placement enquiry stage
-export async function changeApplicationStage(id: string, stage: string): Promise<{ success: boolean; message: string; statusCode: number; data: StudentApplication }> {
+export async function changeApplicationStage(id: string, stage: string, placements?: (string | number)[]): Promise<{ success: boolean; message: string; statusCode: number; data: StudentApplication }> {
+  const payload: { stage: string; placements?: (string | number)[] } = { stage };
+  if (placements) {
+    payload.placements = placements;
+  }
+
   const response = await fetch(`${API_BASE_URL}/admin/change-student-placement-enquiry-stage/${id}`, {
     method: "PATCH",
     headers: {
       ...getAuthHeaders(),
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ stage }),
+    body: JSON.stringify(payload),
   });
 
   const result = (await response.json()) as { success: boolean; message: string; statusCode: number; data: StudentApplication };
@@ -517,7 +563,31 @@ export async function changeApplicationStage(id: string, stage: string): Promise
   return result;
 }
 
-// Conversations interfaces
+// Match placements to a student application
+export async function matchPlacement(
+  id: string,
+  placementIds: string[],
+  finalPaymentAmount: number
+): Promise<{ success: boolean; message: string; statusCode: number }> {
+  const response = await fetch(`${API_BASE_URL}/admin/match-placement/${id}`, {
+    method: "POST",
+    headers: {
+      ...getAuthHeaders(),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ placementIds, finalPaymentAmount }),
+  });
+
+  const result = (await response.json()) as { success: boolean; message: string; statusCode: number };
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to match placements.");
+  }
+
+  return result;
+}
+
+
 export interface Conversation {
   _id: string;
   userId: string;
@@ -629,6 +699,53 @@ export async function getUserConversations(): Promise<{ success: boolean; messag
 
   if (!response.ok || !result.success) {
     throw new Error(result.message || "Failed to load conversations.");
+  }
+
+  return result;
+}
+
+// Notifications interfaces
+export interface Notification {
+  _id: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export interface NotificationsResponse {
+  success: boolean;
+  message: string;
+  data: Notification[];
+}
+
+export async function getUnreadNotifications(): Promise<NotificationsResponse> {
+  const response = await fetch(`${API_BASE_URL}/notifications`, {
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  const result = (await response.json()) as NotificationsResponse;
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to load notifications.");
+  }
+
+  return result;
+}
+
+export async function readAllNotifications(): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE_URL}/notifications`, {
+    method: "PATCH",
+    headers: {
+      ...getAuthHeaders(),
+    },
+  });
+
+  const result = (await response.json()) as { success: boolean; message: string };
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.message || "Failed to mark notifications as read.");
   }
 
   return result;

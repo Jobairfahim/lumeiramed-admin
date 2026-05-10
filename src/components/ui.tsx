@@ -1,6 +1,7 @@
 export function Logo() {
   return (
     <div className="flex items-center gap-2 px-2 mb-8">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img 
         src="/images/logo.png" 
         alt="Lumiera Med Logo" 
@@ -12,6 +13,7 @@ export function Logo() {
 
 interface AvatarProps { size?: string; src?: string; alt?: string; }
 export function Avatar({ size = "w-8 h-8", src, alt = "User" }: AvatarProps) {
+  // eslint-disable-next-line @next/next/no-img-element
   if (src) return <img src={src} alt={alt} className={`${size} rounded-full object-cover flex-shrink-0`} />;
   return (
     <div className={`${size} rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0`}>

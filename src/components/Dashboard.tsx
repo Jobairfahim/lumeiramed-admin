@@ -9,6 +9,25 @@ import {
   AreaChart, Area,
 } from "recharts";
 
+const stageBadgeClass = (stage: string) => {
+  switch (stage) {
+    case "awaiting for payment": return "bg-amber-50 text-amber-800 border-amber-300";
+    case "matching required":    return "bg-blue-50 text-blue-800 border-blue-300";
+    case "awaiting response":    return "bg-green-50 text-green-700 border-green-300";
+    case "completed":            return "bg-teal-50 text-teal-800 border-teal-300";
+    case "rejected":             return "bg-red-50 text-red-700 border-red-300";
+    default:                     return "bg-gray-100 text-gray-600 border-gray-200";
+  }
+};
+
+const paymentBadgeClass = (status: string) =>
+  status === "paid"
+    ? "bg-green-50 text-green-700 border-green-300"
+    : "bg-amber-50 text-amber-800 border-amber-300";
+
+const canView = (stage: string) =>
+  stage !== "completed" && stage !== "rejected";
+
 interface DashboardProps { navigate: (p: AdminPage) => void; }
 
 export function Dashboard({ navigate }: DashboardProps) {
@@ -100,6 +119,7 @@ export function Dashboard({ navigate }: DashboardProps) {
           <div key={i} className="bg-white rounded-2xl p-4 flex items-center gap-3 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all">
             <div className="w-11 h-11 bg-teal-50 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
               {s.icon.startsWith("/") ? (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={s.icon} alt={s.label} className="w-7 h-7 object-contain" />
               ) : (
                 <span>{s.icon}</span>
@@ -174,10 +194,10 @@ export function Dashboard({ navigate }: DashboardProps) {
           <button type="button" onClick={() => navigate("applications")} className="text-sm text-teal-500 hover:underline underline-offset-2 font-medium">View all</button>
         </div>
         <table className="w-full text-sm">
-          <thead className="bg-gray-50/70">
-            <tr>
-              {["Students", "University/Medical School", "Department", "Duration", "First Payment", "Final Payment", "Action"].map(h => (
-                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap">{h}</th>
+          <thead>
+            <tr className="bg-teal-500">
+              {["Student", "University", "Specialty", "Duration", "Stage", "First Pay", "Final Pay", "Action"].map(h => (
+                <th key={h} className="text-left px-5 py-3 text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
@@ -188,10 +208,27 @@ export function Dashboard({ navigate }: DashboardProps) {
                 <td className="px-5 py-3.5 text-gray-600">{app.universityOrMedicalSchool}</td>
                 <td className="px-5 py-3.5 text-gray-600">{app.preferredSpecialty}</td>
                 <td className="px-5 py-3.5 text-gray-600">{app.duration}</td>
-                <td className="px-5 py-3.5"><span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">{app.firstPayment}</span></td>
-                <td className="px-5 py-3.5"><span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 border border-amber-200">{app.finalPayment}</span></td>
                 <td className="px-5 py-3.5">
-                  <button type="button" onClick={() => navigate("applications")} className="text-teal-500 hover:text-teal-700 text-sm font-semibold">View</button>
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full border whitespace-nowrap ${stageBadgeClass(app.stage)}`}>
+                    {app.stage}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5">
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full border ${paymentBadgeClass(app.firstPayment)}`}>
+                    {app.firstPayment}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5">
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full border ${paymentBadgeClass(app.finalPayment)}`}>
+                    {app.finalPayment}
+                  </span>
+                </td>
+                <td className="px-5 py-3.5">
+                  {canView(app.stage) ? (
+                    <button type="button" onClick={() => navigate("applications")} className="text-teal-500 hover:text-teal-700 text-sm font-semibold hover:underline underline-offset-2">View</button>
+                  ) : (
+                    <span className="text-gray-300 text-sm">—</span>
+                  )}
                 </td>
               </tr>
             ))}

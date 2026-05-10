@@ -52,7 +52,7 @@ export function Login({ onLogin }: LoginProps) {
               <rect x="10" y="17" width="20" height="6" rx="2" fill="#2ABFBF" />
               <circle cx="20" cy="20" r="3" fill="#0f766e" />
             </svg>
-            <span className="text-sm font-bold text-gray-800">LumieraMed</span>
+            <span className="text-sm font-bold text-gray-800">LumieraMed Admin</span>
           </div>
 
           <h1 className="text-2xl font-bold text-gray-900 mb-1.5">Welcome Back!</h1>
